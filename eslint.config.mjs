@@ -1,21 +1,17 @@
-import typescript from 'typescript-eslint'
+import typescript from '@typescript-eslint/eslint-plugin'
 import eslintjs from '@eslint/js'
 import typescriptParser from '@typescript-eslint/parser'
-import typescriptPlugin from '@stylistic/eslint-plugin-ts'
+import typescriptPlugin from '@typescript-eslint/eslint-plugin'
 
-export default typescript.config(
+export default [
+    eslintjs.configs.recommended,
+    typescript.configs.strictTypeChecked,
+    typescript.configs.strict,
+    typescript.configs.stylistic,
     {
-        extends: [
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            eslintjs.configs.recommended,
-            ...typescript.configs.strictTypeChecked,
-            ...typescript.configs.strict,
-            ...typescript.configs.stylistic
-        ],
         files: ['src/**/*.ts'],
         languageOptions: {
             ecmaVersion: 'latest',
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             parser: typescriptParser,
             parserOptions: {
                 impliedStrict: true,
@@ -24,15 +20,14 @@ export default typescript.config(
             sourceType: 'module'
         },
         plugins: {
-            '@stylistic': typescriptPlugin
+            '@typescript-eslint': typescriptPlugin
         },
 
         rules: {
             '@typescript-eslint/array-type': ['error', {default: 'generic'}],
-           // '@typescript-eslint/no-unused-vars': ['off']
         }
     },
     {
         ignores: ['*.mjs', '*.js', "coverage"]
     }
-)
+]
