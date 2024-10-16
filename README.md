@@ -88,3 +88,5 @@ export default typescript.config(
     }
 )
 ```
+npm i dotenv
+npm i zod
