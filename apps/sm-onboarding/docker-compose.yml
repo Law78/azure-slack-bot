@@ -1,0 +1,85 @@
+version: "3.2"
+
+services:
+
+  fnstorage:
+    image: mcr.microsoft.com/azure-storage/azurite
+    hostname: azurite
+    restart: always
+    command: "azurite --blobHost 0.0.0.0 --blobPort 10003 --queueHost 0.0.0.0 --queuePort 10004 --tableHost 0.0.0.0 --tablePort 10005"
+    ports:
+      - "10003:10003"
+      - "10004:10004"
+      - "10005:10005"
+    networks:
+      - sm-fn
+
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:latest
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   ports:
+  #     - 22181:2181
+  #   networks:
+  #     - sm-fn
+  
+  # kafka:
+  #   image: confluentinc/cp-kafka:latest
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - 29092:29092
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #   networks:
+  #     - sm-fn
+
+  kafka-publisher-fn:
+    build:
+      context: ./kafka-publisher-fn
+      dockerfile: Dockerfile
+    env_file: 
+      - ./kafka-publisher-fn/.env
+    environment:
+      - languageWorkers__node__arguments=--inspect=0.0.0.0:5858
+    working_dir: /usr/src/app
+    ports:
+      - "7071:80"
+      - "5858:5858"
+    networks:
+      - sm-fn
+    depends_on:
+      - fnstorage
+    volumes:
+      - .:/usr/src/app
+
+  sm-onboarding-fn:
+    build:
+      context: ./io-sm-onboarding-fn
+      dockerfile: Dockerfile
+    env_file: 
+      - ./io-sm-onboarding-fn/.env
+    environment:
+      - languageWorkers__node__arguments=--inspect=0.0.0.0:5858
+    working_dir: /usr/src/app
+    ports:
+      - "7072:80"
+      - "5859:5858"
+    networks:
+      - sm-fn
+    depends_on:
+      - fnstorage
+    volumes:
+      - .:/usr/src/app
+
+networks:
+  sm-fn:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
